@@ -1,2 +1,3 @@
 # pomodoro
- The Pomodoro Technique 
+
+A desktop application of pomodoro developed by electron
