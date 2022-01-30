@@ -1,0 +1,26 @@
+{
+  "name": "pomodoro",
+  "version": "0.0.1",
+  "description": "A desktop application of pomodoro developed by electron",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lqzo/pomodoro.git"
+  },
+  "keywords": [
+    "electron",
+    "pomodoro"
+  ],
+  "author": "lqzo <18903968616@163.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lqzo/pomodoro/issues"
+  },
+  "homepage": "https://github.com/lqzo/pomodoro#readme",
+  "devDependencies": {
+    "electron": "^16.0.8"
+  }
+}
