@@ -12,15 +12,37 @@
       height: 100vh;
       margin: 0;
     }
-    #timer-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    #canvas {
+      display: block;
+      margin: 40px auto;
+    }
+    #btn-group {
+      position: fixed;
+      width: 100vw;
+      bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 30px;
+      box-sizing: border-box;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid #f1f1f1;
+      cursor: pointer;
     }
   </style>
   <body>
-    <div id="timer-container"></div>
+    <canvas id="canvas" width="300" height="300">
+      <p>抱歉, 您的浏览器不支持canvas</p>
+    </canvas>
+    <div id="btn-group">
+      <div class="btn start-work">开始工作</div>
+      <div class="btn end-work">结束工作</div>
+      <div class="btn start-rest">开始休息</div>
+      <div class="btn end-rest">结束休息</div>
+    </div>
     <script src="./renderer.js"></script>
   </body>
 </html>
