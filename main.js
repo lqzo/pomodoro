@@ -4,8 +4,8 @@ let win;
 
 app.on("ready", () => {
   win = new BrowserWindow({
-    width: 300,
-    height: 300,
+    width: 520,
+    height: 520,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -17,7 +17,7 @@ app.on("ready", () => {
 });
 
 function handleIPC() {
-  ipcMain.handle("work-notification", async function () {
+  ipcMain.handle("work-end", async function () {
     let res = await new Promise((resolve, reject) => {
       let notification = new Notification({
         title: "任务结束",
@@ -31,6 +31,25 @@ function handleIPC() {
       });
       notification.on("close", () => {
         resolve("work");
+      });
+    });
+    return res;
+  });
+
+  ipcMain.handle("rest-end", async function () {
+    let res = await new Promise((resolve, reject) => {
+      let notification = new Notification({
+        title: "休息结束",
+        body: "是否开始工作",
+        actions: [{ text: "开始工作", type: "button" }],
+        closeButtonText: "继续休息",
+      });
+      notification.show();
+      notification.on("action", () => {
+        resolve("work");
+      });
+      notification.on("close", () => {
+        resolve("rest");
       });
     });
     return res;
