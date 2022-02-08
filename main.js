@@ -11,47 +11,35 @@ app.on("ready", () => {
       contextIsolation: false,
     },
   });
+
+  // debug
   // win.webContents.openDevTools();
+
+  // load file
   win.loadFile("./index.html");
   handleIPC();
 });
 
 function handleIPC() {
-  ipcMain.handle("work-end", async function () {
-    let res = await new Promise((resolve, reject) => {
-      let notification = new Notification({
-        title: "任务结束",
-        body: "是否开始休息",
-        actions: [{ text: "开始休息", type: "button" }],
-        closeButtonText: "继续工作",
+  ipcMain.handle(
+    "notification",
+    async (e, { body, title, actions, closeButtonText }) => {
+      let res = await new Promise((resolve, reject) => {
+        let notification = new Notification({
+          title,
+          body,
+          actions,
+          closeButtonText,
+        });
+        notification.show();
+        notification.on("action", function (event) {
+          resolve({ event: "action" });
+        });
+        notification.on("close", function (event) {
+          resolve({ event: "close" });
+        });
       });
-      notification.show();
-      notification.on("action", () => {
-        resolve("rest");
-      });
-      notification.on("close", () => {
-        resolve("work");
-      });
-    });
-    return res;
-  });
-
-  ipcMain.handle("rest-end", async function () {
-    let res = await new Promise((resolve, reject) => {
-      let notification = new Notification({
-        title: "休息结束",
-        body: "是否开始工作",
-        actions: [{ text: "开始工作", type: "button" }],
-        closeButtonText: "继续休息",
-      });
-      notification.show();
-      notification.on("action", () => {
-        resolve("work");
-      });
-      notification.on("close", () => {
-        resolve("rest");
-      });
-    });
-    return res;
-  });
+      return res;
+    }
+  );
 }

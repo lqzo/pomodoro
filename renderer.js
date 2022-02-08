@@ -1,75 +1,89 @@
 const { ipcRenderer } = require("electron");
 const Timer = require("timer.js");
 
+const workTime = 25 * 60; // 工作时长
+const restTime = 5 * 60; // 休息时长
+let type = 0; // 0 开始工作 1 停止工作 2 开始休息 3 停止休息
 const workTimer = new Timer({
   ontick: (ms) => {
-    updateCanvas(ms);
+    updateCanvas(Math.ceil(ms / 1000), type < 2 ? workTime : restTime);
+  },
+  onstop: () => {
+    type = 0;
+    updateCanvas(0, 1);
   },
   onend: () => {
-    workEnd();
+    if (type === 1) {
+      type = 2;
+      updateCanvas(0, 1);
+      if (process.platform === "darwin") {
+        notification({
+          title: "恭喜你完成任务",
+          body: "是否开始休息?",
+          actionText: "休息五分钟",
+          closeButtonText: "继续工作",
+          onaction: startRest,
+          onclose: startWork,
+        });
+      } else {
+        alert("工作结束");
+      }
+    } else if (type === 3) {
+      type = 0;
+      updateCanvas(0, 1);
+      if (process.platform === "darwin") {
+        notification({
+          title: "休息结束",
+          body: "开始新的工作吧！",
+          actionText: "开始工作",
+          closeButtonText: "继续休息",
+          onaction: startWork,
+          onclose: startRest,
+        });
+      } else {
+        alert("休息结束");
+      }
+    }
   },
 });
 
-function resetWorkTimer() {
-  restTimer?.stop();
-  workTimer.start(25 * 60);
-  timeVal = 25 * 60 * 1000;
+function startWork() {
+  type = 1;
+  workTimer.start(workTime);
 }
 
-const restTimer = new Timer({
-  ontick: (ms) => {
-    updateCanvas(ms);
-  },
-  onend: () => {
-    restEnd();
-  },
-});
-
-function resetRestTimer() {
-  workTimer?.stop();
-  restTimer.start(5 * 60);
-  timeVal = 5 * 60 * 1000;
+function startRest() {
+  type = 3;
+  workTimer.start(restTime);
 }
 
-let timeVal = 0;
+async function notification({
+  title,
+  body,
+  actionText,
+  closeButtonText,
+  onclose,
+  onaction,
+}) {
+  let res = await ipcRenderer.invoke("notification", {
+    title,
+    body,
+    actions: [{ text: actionText, type: "button" }],
+    closeButtonText,
+  });
+  res.event === "close" ? onclose() : onaction();
+}
 
-async function workEnd() {
-  let res = await ipcRenderer.invoke("work-end");
-  if (res === "rest") {
-    resetRestTimer();
-  } else if (res === "work") {
-    resetWorkTimer();
+const switchBtn = document.getElementById("switch-btn");
+
+switchBtn.onclick = function () {
+  if (this.innerText === "开始工作") {
+    startWork();
+  } else if (this.innerText === "开始休息") {
+    startRest();
+  } else {
+    workTimer.stop();
   }
-}
-
-async function restEnd() {
-  let res = await ipcRenderer.invoke("rest-end");
-  if (res === "rest") {
-    resetRestTimer();
-  } else if (res === "work") {
-    resetWorkTimer();
-  }
-}
-
-resetWorkTimer();
-
-const startWordDom = document.querySelector(".start-work");
-const endWordDom = document.querySelector(".end-work");
-const startRestDom = document.querySelector(".start-rest");
-const endRestDom = document.querySelector(".end-rest");
-
-startWordDom.onclick = resetWorkTimer;
-
-endWordDom.onclick = function () {
-  workTimer.stop();
-  workEnd();
-};
-
-startRestDom.onclick = resetRestTimer;
-
-endRestDom.onclick = function () {
-  restTimer.stop();
-  restEnd();
 };
 
 const canvas = document.getElementById("canvas"),
@@ -124,8 +138,10 @@ function sector(cx, cy, r, startAngle, endAngle, anti) {
   ctx.stroke();
 }
 
+// 默认一个完成的
+updateCanvas(0, 1);
 // 更新 Canvas
-function updateCanvas(ms) {
+function updateCanvas(s, maxTime) {
   // 清除canvas内容
   ctx.clearRect(0, 0, circleX * 2, circleY * 2);
 
@@ -135,7 +151,6 @@ function updateCanvas(ms) {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#333";
 
-  let s = Math.ceil(ms / 1000);
   let ss = s % 60;
   let mm = Math.floor(s / 60);
 
@@ -148,6 +163,18 @@ function updateCanvas(ms) {
   // 圆形
   circle(circleX, circleY, radius);
 
+  console.log(s, maxTime, (1 - s / maxTime) * 360);
   // 圆弧
-  sector(circleX, circleY, radius, 0, (1 - ms / timeVal) * 360);
+  sector(circleX, circleY, radius, 0, (1 - s / maxTime) * 360);
+
+  // 更新操作按钮文案
+  if (type === 0) {
+    switchBtn.innerText = "开始工作";
+  } else if (type === 1) {
+    switchBtn.innerText = "停止工作";
+  } else if (type === 2) {
+    switchBtn.innerText = "开始休息";
+  } else {
+    switchBtn.innerText = "停止休息";
+  }
 }
